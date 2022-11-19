@@ -8,17 +8,17 @@ pub fn print_hello() {
     println!("Hello World!")
 }
 
-pub fn receive_data(data_store: &mut Arc<Mutex<Vec<Vec<String>>>>) {
+pub fn receive_data(server_addr: &str, data_store: &mut Arc<Mutex<Vec<Vec<String>>>>) {
     // connect to WS server
     let (mut socket, _response) = tungstenite::connect(
-        url::Url::parse("ws://192.168.1.9:9090")
+        url::Url::parse(&server_addr)
         .unwrap()
     ).expect("Can't connect");
 
-    let arc_store = Arc::clone(&data_store);
+    let arc_store = Arc::clone(data_store);
 
     // loop forever
-    let handle = thread::spawn( 
+    thread::spawn( 
         move || {
             loop {
 
