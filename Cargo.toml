@@ -1,11 +1,14 @@
 [package]
 name = "tundraplot"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+clap = { version = "4.0.26", features = ["derive"] }
+eframe = "0.16.0"
+egui = "0.16.1"
 tokio = { version = "1.21.2", features = ["full"] }
 tungstenite = "0.17.3"
 url = "2.3.1"

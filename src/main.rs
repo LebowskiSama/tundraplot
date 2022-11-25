@@ -1,28 +1,23 @@
 use std::sync::{Arc, Mutex};
+use eframe::NativeOptions;
+use egui::{CtxRef, plot::{Plot, Line, Values, Value}};
+
 
 mod socks;
-mod utils;
-mod dtypes;
+mod egui_app;
 
-use dtypes::dataframes::AccDataFrame;
-use utils::parser;
+use egui_app::App;
 
 
 fn main() {
-    let server_addr: String = String::from("ws://192.168.1.9:9090");
-    let mut store: Arc<Mutex<Vec<Vec<String>>>> = Arc::new(Mutex::new(Vec::new()));
-    let mut df: Arc<Mutex<AccDataFrame>> = Arc::new(Mutex::new(AccDataFrame::new()));
-
-    socks::receive_data(&server_addr, &mut store);
+    let server_addr: String = String::from("ws://192.168.0.118:9090");
+    let mut app: App = App::new();
     
-    loop {
-        // append to dataframe
-        parser::parse(&mut store, &mut df);
-        // allow main to take control of MutexGuard
-        let store_ = store.lock().unwrap();
-
-        // println!("{}", store_.len());
-    }
+    // receive and push data into GUI state
+    socks::receive_data(&server_addr, &mut app);
+    
+    let native_options = NativeOptions::default();
+    eframe::run_native(Box::new(app), native_options)
 
 }
 

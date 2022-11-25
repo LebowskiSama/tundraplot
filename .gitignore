@@ -16,3 +16,5 @@ Cargo.lock
 # py
 *.py
 *.ipynb
+
+.DS_Store

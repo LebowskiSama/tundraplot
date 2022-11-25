@@ -1,24 +1,31 @@
-use std::thread;
 use std::sync::{Arc, Mutex};
+use std::collections::VecDeque;
+use egui::plot::Value;
+
+use super::egui_app;
+use egui_app::App;
 
 use tungstenite;
 use url;
 
-pub fn print_hello() {
-    println!("Hello World!")
+macro_rules! sanitize_parse {
+    ($s: expr) => {
+        $s.chars().filter(|c| c.is_digit(10)).collect::<String>().to_owned().parse::<f64>().unwrap()
+    };
 }
 
-pub fn receive_data(server_addr: &str, data_store: &mut Arc<Mutex<Vec<Vec<String>>>>) {
+pub fn receive_data(server_addr: &str, gui_app: &mut App) {
     // connect to WS server
     let (mut socket, _response) = tungstenite::connect(
         url::Url::parse(&server_addr)
         .unwrap()
     ).expect("Can't connect");
 
-    let arc_store = Arc::clone(data_store);
+    let app_state_idx = Arc::clone(&mut gui_app.idx);
+    let app_state_x = Arc::clone(&mut gui_app.buffer_x);
 
     // loop forever
-    thread::spawn( 
+    std::thread::spawn( 
         move || {
             loop {
 
@@ -31,10 +38,26 @@ pub fn receive_data(server_addr: &str, data_store: &mut Arc<Mutex<Vec<Vec<String
                     _ => { panic!() }
                 };
                 
-                let msg_split = msg.to_string().split(",").map(|x| x.to_string()).collect::<Vec<String>>();
-        
+                let sample = msg.to_string().split(",").map(|x| x.to_string()).collect::<Vec<String>>();
+
+                let t = sanitize_parse!(sample[1]);
+                // let x = sanitize_parse!(sample[2]);
+                let x = sanitize_parse!(sample[3]);
+                // let z = sanitize_parse!(sample[4]);
                 
-                arc_store.lock().unwrap().push(msg_split);
+                let mut arc_app_state_idx = app_state_idx.lock().unwrap();
+                let mut arc_app_state_x = app_state_x.lock().unwrap();
+            
+                *arc_app_state_idx += 1.0;
+
+
+                arc_app_state_x.push_back(
+                    Value { x: arc_app_state_idx.clone(), y: x }
+                );
+
+                // if arc_app_state_x.len() == 100 {
+                //     arc_app_state_x.pop_front();
+                // }
             }
         }
     );
